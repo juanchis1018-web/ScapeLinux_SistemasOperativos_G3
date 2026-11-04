@@ -1,0 +1,19 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+
+# Base de datos generada al jugar
+*.db
+*.sqlite
+
+# Máquinas virtuales y discos: son muy pesados para GitHub
+*.ova
+*.vdi
+*.vmdk
+*.iso
+
+# Sistema y editor
+Thumbs.db
+.DS_Store
+.vscode/
