@@ -1,0 +1,36 @@
+NOTA: ejecutada en un entorno Linux de pruebas, no en VirtualBox. Ver pruebas/README.md.
+ScapeLinux - prueba integral - 2026-11-10 22:24:27
+Equipo: entorno Linux de pruebas · Ubuntu 24.04.5 LTS · 6.18.44-fc-v378
+
+[OK]    P3  Base de datos con 6 niveles
+[OK]    P8  jugador no puede leer la base de datos
+[OK]    P9  sudo no permite chown sobre otro archivo
+[OK]    P9  sudo no permite chown hacia otro usuario
+[OK]    P6  Llave con formato inválido rechazada
+[OK]    P6  Llave incorrecta rechazada
+[OK]    P5  Nivel 1: llave encontrada con find
+[OK]    P5  Nivel 1 superado
+[OK]    P5  Nivel 2: puerta.txt no se puede leer al inicio
+[OK]    P5  Nivel 2 superado con chown y chmod
+[OK]    P5  Nivel 3: proceso visible con ps
+[OK]    P5  Nivel 3: llave entregada al detener el proceso
+[OK]    P5  Nivel 3 superado
+[OK]    P5  Nivel 4: jugador no puede abrir la bóveda
+[OK]    P5  Nivel 4: guardia pertenece al grupo boveda
+[OK]    P5  Nivel 4: la contraseña de la nota es válida
+[OK]    P5  Nivel 4 superado
+[OK]    P5  Nivel 5: jugador no puede leer el log
+[OK]    P5  Nivel 5 superado con grep
+[OK]    P7  Nivel 6: ejecutar la fuga a mano no basta
+        Esperando a que cron ejecute la fuga (hasta 2 minutos)...
+[OK]    P5  Nivel 6 superado por cron
+        ✔ Nivel 6 superado: 250 pts (0 min, 2 fallos, -0 por pistas). Total: 980 pts
+        
+        *** ¡ESCAPASTE! ***
+        Jugador: jugador
+        Niveles: 6/6
+        Tiempo: 0 min
+        Puntaje: 980 pts
+
+Resultado: 21 correctas, 0 fallidas
+Guardado en: pruebas/resultado_prueba_entorno_linux.txt
