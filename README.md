@@ -9,7 +9,7 @@ Juego de simulación en máquinas virtuales para aprender Linux resolviendo reto
 | **Grupo** | G3 |
 | **Repositorio** | [ScapeLinux_SistemasOperativos_G3](https://github.com/juanchis1018-web/ScapeLinux_SistemasOperativos_G3) |
 | **Integrantes** | Juan Sebastian Muñoz Melo · Maria Luisa Silva Santiago |
-| **Estado** | Fase de diseño: este repositorio presenta el levantamiento de información, la estructura, el modelo de datos y las decisiones de validación y seguridad. El juego se implementará en las siguientes entregas. |
+| **Estado** | Fase II: los seis niveles, el verificador, el instalador y las pruebas están implementados. Las pruebas automáticas pasan en un entorno Linux de pruebas; la prueba en las VMs de VirtualBox está en curso. |
 
 ## Contenido
 
@@ -24,7 +24,7 @@ Juego de simulación en máquinas virtuales para aprender Linux resolviendo reto
 9. [Tecnologías](#9-tecnologías)
 10. [Requisitos iniciales de ejecución](#10-requisitos-iniciales-de-ejecución)
 11. [Resultado esperado y alcance](#11-resultado-esperado-y-alcance)
-12. [Estado actual y próximos avances](#12-estado-actual-y-próximos-avances)
+12. [Fase II: implementación y pruebas](#12-fase-ii-implementación-y-pruebas)
 13. [Documentación](#13-documentación)
 14. [Ajustes por la revisión del docente](#14-ajustes-por-la-revisión-del-docente)
 
@@ -183,10 +183,11 @@ flowchart TB
 
 | Módulo | Responsabilidad | Ubicación prevista |
 |---|---|---|
-| Niveles | Crear los retos cuando se desbloquean | `src/niveles/` |
+| Niveles | Crear, limpiar y comprobar cada reto | `src/niveles/` |
 | Verificador | Validar llaves y estado, dar pistas y calcular el puntaje | `src/verificador/` |
 | Base de datos | Guardar partidas, progreso, intentos y pistas | `src/base_datos/` |
 | Comprobación del entorno | Detener la ejecución fuera de una VM de VirtualBox | `src/scripts/` |
+| Instalador | Crear usuarios, permisos, servicio, base de datos y menú | `src/instalar.sh` |
 | Reinicio | Recrear un nivel o restaurar el snapshot | Verificador y VirtualBox |
 
 ### Front: interfaz de terminal
@@ -323,6 +324,8 @@ El trabajo se registra en la rama `main` con commits cortos que dicen qué se hi
 | 3 | Programar los niveles 4 a 6, llaves, puntaje y reinicio por nivel | `Agrega niveles 4 a 6 y verificador` |
 | 4 | Pruebas de compatibilidad y recuperación, snapshots, manual y presentación | `Agrega pruebas y manual de usuario` |
 
+En la Fase II el trabajo se registró por componentes: niveles, verificador, instalador, pruebas y documentación.
+
 ### Organización del repositorio
 
 ```text
@@ -332,6 +335,7 @@ ScapeLinux_SistemasOperativos_G3/
 ├── .gitignore
 ├── .gitattributes                 Conserva los saltos de línea de Linux
 ├── documentacion/
+│   ├── guia_instalacion_vm.md     Montaje de las VMs paso a paso
 │   ├── descripcion_proyecto.pdf
 │   ├── requerimientos.pdf
 │   ├── arquitectura_inicial.pdf
@@ -339,17 +343,25 @@ ScapeLinux_SistemasOperativos_G3/
 │   ├── referencias.pdf
 │   └── diagramas/                 Estructura, arquitectura, flujo y datos
 ├── src/
-│   ├── niveles/                   Scripts Bash de cada nivel (por desarrollar)
-│   ├── verificador/               Programa en Python (por desarrollar)
+│   ├── instalar.sh                Instalador del juego en la VM Servidor
+│   ├── niveles/
+│   │   ├── comun.sh               Funciones comunes
+│   │   ├── nivel1.sh … nivel6.sh  Preparar, limpiar y comprobar cada reto
+│   │   └── bin/                   puerta_bloqueada, abrir_puerta y fuga
+│   ├── verificador/
+│   │   └── scapelinux.py          Verificador en Python
+│   ├── config/                    Servicio systemd, reglas de sudo y comando verificar
 │   ├── base_datos/
-│   │   └── esquema.sql            Modelo relacional en SQLite
+│   │   └── esquema.sql            Modelo relacional y pistas
 │   └── scripts/
 │       └── comprobar_entorno.sh   Bloquea la ejecución fuera de una VM
 ├── recursos/
-│   └── imagenes/
-│       └── ficha_tecnica.png      Ficha técnica de la Entrega 1
+│   └── imagenes/                  Ficha técnica y evidencias
 └── pruebas/
-    └── README.md                  Plan de pruebas
+    ├── README.md                  Plan y resultados de las pruebas
+    ├── test_verificador.py        Pruebas unitarias
+    ├── prueba_integral.sh         Juega los seis niveles automáticamente
+    └── resultado_prueba_entorno_linux.txt
 ```
 
 Las VMs exportadas (`.ova`) no van en el repositorio, porque son demasiado pesadas para GitHub.
@@ -361,7 +373,7 @@ Las VMs exportadas (`.ova`) no van en el repositorio, porque son demasiado pesad
 - **Una llave por partida.** El verificador genera cada llave al azar y guarda solo su hash SHA-256. Una llave de otra partida no sirve.
 - **Un nivel a la vez.** Los archivos y procesos de un nivel se crean cuando se desbloquea, así que no se puede buscar antes la llave de un nivel posterior.
 - **Llave más estado del sistema.** Cuando el reto cambia el sistema, el verificador comprueba ese cambio además de la llave.
-- **Sin acceso a las respuestas.** La base de datos y los programas internos pertenecen a usuarios de servicio. El servidor no contiene las soluciones.
+- **Sin acceso a las respuestas.** La base de datos solo la lee `root` (permisos `600`) y el jugador no puede modificar los programas del juego. Las llaves se pasan a los scripts por la entrada estándar, para que no aparezcan en `ps`.
 
 ### Criterio de cada nivel
 
@@ -372,7 +384,7 @@ Las VMs exportadas (`.ova`) no van en el repositorio, porque son demasiado pesad
 | 3. Procesos | La llave coincide y el servicio `puerta_bloqueada` está inactivo | La llave se escribe solo cuando el proceso termina |
 | 4. Usuarios y grupos | La llave coincide | El archivo solo lo lee el grupo `boveda`, al que pertenece `guardia` y no `jugador` |
 | 5. Logs | La llave coincide | La llave está en una línea al azar de un log extenso, legible solo por el grupo `boveda` |
-| 6. Cron | `crontab` de `jugador` contiene la tarea y esta escribió su registro después de programarse | Crear el archivo a mano no basta, porque también se revisa `crontab` |
+| 6. Cron | `crontab` de `jugador` contiene la tarea, la fuga dejó su registro y el registro de cron muestra que cron la ejecutó | Ejecutar la fuga a mano no basta, porque el registro de cron no la muestra |
 
 El proceso del nivel 3 corre con el usuario `jugador`, porque `kill` no permite a un usuario común detener procesos de `root`.
 
@@ -397,15 +409,15 @@ Todas estas medidas se aplican dentro de las VMs de práctica:
 - **Bloqueo fuera de la VM.** Los scripts de instalación deben ejecutar primero [`src/scripts/comprobar_entorno.sh`](src/scripts/comprobar_entorno.sh), que se detiene si el equipo no es una VM de VirtualBox.
 - **Red aislada.** Durante el juego, las VMs usan solo la red interna. El adaptador NAT se usa únicamente para instalar paquetes y luego se retira.
 - **Sin puentes con el anfitrión.** Carpetas compartidas, portapapeles y arrastrar y soltar quedan desactivados.
-- **Permisos mínimos.** `jugador` y `guardia` no son administradores. Las reglas de `sudo` indican el comando y los argumentos exactos, sin comodines.
+- **Permisos mínimos.** `jugador` y `guardia` no son administradores. `jugador` solo tiene dos reglas de `sudo`: el `chown` exacto del nivel 2, con comando, usuario y archivo fijos, y el verificador, que rechaza cualquier argumento que no sea una opción conocida o una llave `XXXX-XXXX`.
+- **Sin enlaces peligrosos.** Lo que se crea o borra en la carpeta del jugador se hace con la identidad de `jugador`, así que un enlace simbólico no puede llevar a `root` a modificar otro archivo.
 - **Consultas seguras.** El verificador usa consultas SQL parametrizadas y valida el formato de cada llave.
 
 | Usuario | Uso | Permisos |
 |---|---|---|
 | `jugador` | Cuenta para jugar | Usuario común |
 | `guardia` | Identidad del nivel 4 | Usuario común, grupo `boveda` |
-| `verificador` | Ejecuta el verificador | Único acceso a la base de datos |
-| `root` | Instala y prepara niveles | No se entrega al jugador |
+| `root` | Instala, prepara niveles y ejecuta el verificador con `sudo` | Único acceso a la base de datos |
 
 ## 7. Compatibilidad entre distribuciones
 
@@ -420,7 +432,7 @@ Los retos se ejecutan solo en Ubuntu Server. Debian o Lubuntu únicamente necesi
 | Saltos de línea | `.gitattributes` conserva el formato de Linux aunque se suba desde Windows |
 | Cron y systemd | Se prueban los niveles 3 y 6 en la versión elegida de Ubuntu Server |
 
-**Estas pruebas están pendientes.** Se harán en la semana 4 y sus resultados quedarán en [`pruebas/README.md`](pruebas/README.md).
+**Estado de las pruebas.** El juego pasó todas las pruebas en un entorno Linux Ubuntu 24.04. La prueba en Ubuntu Server 26.04 con `sudo-rs` se registrará en [`pruebas/README.md`](pruebas/README.md).
 
 ## 8. Recuperación
 
@@ -476,12 +488,34 @@ El formato `.ova` no conserva los snapshots. Después de importar las VMs hay qu
 
 Los valores de RAM del anfitrión y de disco son estimaciones del equipo y se ajustarán en las pruebas.
 
-Cuando el proyecto esté implementado, el README incluirá la instalación completa. Por ahora se puede comprobar una VM así:
+### Instalación y juego
+
+La guía completa, con la creación de las VMs, está en [`documentacion/guia_instalacion_vm.md`](documentacion/guia_instalacion_vm.md). En resumen, en la VM Servidor:
 
 ```text
-bash src/scripts/comprobar_entorno.sh servidor
-bash src/scripts/comprobar_entorno.sh jugador
+sudo apt install -y git openssh-server cron sqlite3
+git clone https://github.com/juanchis1018-web/ScapeLinux_SistemasOperativos_G3.git
+cd ScapeLinux_SistemasOperativos_G3/src
+sudo bash instalar.sh
 ```
+
+Desde la VM Jugador:
+
+```text
+ssh jugador@IP_DEL_SERVIDOR
+```
+
+Al entrar aparece el menú. Estos son los comandos del jugador:
+
+| Comando | Función |
+|---|---|
+| `verificar` | Muestra el menú y el nivel actual |
+| `verificar LLAVE` | Entrega la llave del nivel |
+| `verificar --pista` | Muestra una pista y resta 10 puntos |
+| `verificar --estado` | Muestra niveles, puntaje y tiempo |
+| `verificar --reiniciar-nivel` | Recrea el nivel con una llave nueva |
+| `verificar --final` | Comprueba la fuga del nivel 6 |
+| `verificar --nueva-partida` | Empieza de nuevo |
 
 ## 11. Resultado esperado y alcance
 
@@ -497,18 +531,58 @@ bash src/scripts/comprobar_entorno.sh jugador
 
 **Alcance inicial:** esta entrega define la base documental y técnica. El producto se implementa en las siguientes fases.
 
-## 12. Estado actual y próximos avances
+## 12. Fase II: implementación y pruebas
 
-**Estado actual.** El proyecto está en fase de diseño y **todavía no se puede jugar**.
+### Avance realizado
 
-| Terminado | Pendiente |
+| Componente | Qué hace | Archivo |
+|---|---|---|
+| Niveles 1 a 6 | Cada script tiene tres acciones: `preparar`, `limpiar` y `comprobar` | [`src/niveles/`](src/niveles/) |
+| Proceso del nivel 3 | Servicio systemd que corre como `jugador`; al detenerlo entrega la llave | [`src/config/scapelinux-puerta.service`](src/config/scapelinux-puerta.service) |
+| Verificador | Valida llaves y estado, da pistas, calcula puntos y prepara el siguiente nivel | [`src/verificador/scapelinux.py`](src/verificador/scapelinux.py) |
+| Base de datos | Esquema con 7 tablas, 6 niveles y 12 pistas | [`src/base_datos/esquema.sql`](src/base_datos/esquema.sql) |
+| Instalador | Comprueba la VM y crea usuarios, permisos, servicio, base de datos y menú | [`src/instalar.sh`](src/instalar.sh) |
+| Permisos | Dos reglas de `sudo` validadas con `visudo` | [`src/config/sudoers_scapelinux`](src/config/sudoers_scapelinux) |
+| Pruebas | 11 pruebas unitarias y una prueba integral de 21 controles | [`pruebas/`](pruebas/) |
+
+### Configuración del sistema operativo
+
+El instalador deja así la VM Servidor:
+
+| Elemento | Configuración |
 |---|---|
-| Levantamiento de información y requerimientos | Instalar y configurar las VMs |
-| Arquitectura, diagramas y modelo de datos | Programar los seis niveles |
-| Esquema SQL y comprobación del entorno | Programar el verificador y el reinicio |
-| Criterios de validación, seguridad y recuperación | Ejecutar las pruebas y crear el manual |
+| Usuarios | `jugador` (cuenta de juego) y `guardia` (nivel 4), sin permisos de administrador |
+| Grupo | `boveda`, al que pertenece solo `guardia` |
+| Carpetas | `/opt/scapelinux` (programas, solo root), `/var/lib/scapelinux` (base de datos, `700`), `/var/log/scapelinux` (`root:boveda`, `750`) y `/srv/scapelinux` (retos) |
+| Servicio | `scapelinux-puerta.service`, que se inicia al desbloquear el nivel 3 |
+| sudo | `/etc/sudoers.d/scapelinux` con las dos reglas del jugador |
+| Inicio de sesión | El `.bashrc` de `jugador` muestra el menú del juego |
 
-**Próximos avances.** Instalar las VMs, implementar los niveles 1 a 3 y luego los niveles 4 a 6 con el verificador. Al final se ejecutará el [plan de pruebas](pruebas/README.md).
+### Pruebas realizadas
+
+| Prueba | Resultado |
+|---|---|
+| Pruebas unitarias del verificador (`python3 -m unittest discover -s pruebas -v`) | 11 de 11 correctas |
+| Prueba integral, que juega los seis niveles como `jugador` (`sudo bash pruebas/prueba_integral.sh`) | 21 de 21 controles correctos |
+| Instalador fuera de una VM de VirtualBox | Se detiene con un aviso |
+| `su guardia` con la contraseña de la nota del nivel 4 | Funciona y muestra el grupo `boveda` |
+
+Estas pruebas se ejecutaron en un entorno Linux Ubuntu 24.04. En ese entorno no hay VirtualBox ni systemd, así que se simularon tres cosas: la detección de VirtualBox, el servicio del nivel 3 y la lectura del registro de cron. El detalle está en [`pruebas/README.md`](pruebas/README.md).
+
+**Partida real como `jugador`:** menú inicial, búsqueda del archivo oculto con `find`, validación de la llave y desbloqueo del nivel 2.
+
+![Partida como jugador](recursos/imagenes/evidencias/partida_jugador.png)
+
+**Prueba integral:** los seis niveles resueltos y los controles de seguridad.
+
+![Resultado de la prueba integral](recursos/imagenes/evidencias/prueba_integral.png)
+
+### Próximos avances
+
+- Ejecutar el instalador y la prueba integral en las VMs de VirtualBox y agregar sus capturas.
+- Confirmar las reglas de `sudo` con `sudo-rs` en Ubuntu Server 26.04.
+- Crear el snapshot `estado-limpio`, medir el tiempo de restauración y exportar las VMs en `.ova`.
+- Escribir el manual de usuario con la solución de cada nivel.
 
 ## 13. Documentación
 
@@ -520,6 +594,7 @@ bash src/scripts/comprobar_entorno.sh jugador
 | [Tecnologías y herramientas](documentacion/tecnologias_herramientas.pdf) | Relación de tecnologías, versiones previstas y uso |
 | [Referencias](documentacion/referencias.pdf) | Fuentes técnicas consultadas |
 | [Diagramas](documentacion/diagramas/) | Estructura, arquitectura, flujo, ciclo de nivel y modelo relacional |
+| [Guía de instalación de las VMs](documentacion/guia_instalacion_vm.md) | Creación de las VMs, red interna, instalación, juego y snapshot |
 | [Ficha técnica](recursos/imagenes/ficha_tecnica.png) | Ficha de la Entrega 1, con el nombre inicial Linux Escape Room |
 
 ## 14. Ajustes por la revisión del docente
