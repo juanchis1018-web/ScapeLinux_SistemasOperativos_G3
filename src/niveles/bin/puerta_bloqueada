@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+# ScapeLinux, nivel 3: proceso que bloquea la puerta.
+# Lo inicia systemd con el usuario jugador. Al detenerlo, systemd ejecuta abrir_puerta.
+trap 'exit 0' TERM INT
+while :; do
+    sleep 1 &
+    wait $!
+done

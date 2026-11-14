@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+# ScapeLinux, nivel 6: la fuga final. El jugador debe programarla con cron.
+DIR="/home/jugador/nivel6"
+[ -d "$DIR" ] || exit 0
+echo "$(date '+%Y-%m-%d %H:%M:%S') La fuga se ejecutó. Ahora corre: verificar --final" >> "$DIR/fuga.log"

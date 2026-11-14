@@ -1,0 +1,5 @@
+# ScapeLinux: permisos de sudo del jugador.
+# 1. El verificador, que valida cada argumento que recibe.
+# 2. El chown exacto del nivel 2: ese comando, ese usuario y ese archivo.
+jugador ALL=(root) NOPASSWD: /opt/scapelinux/verificador/scapelinux.py
+jugador ALL=(root) NOPASSWD: /usr/bin/chown jugador /srv/scapelinux/nivel2/puerta.txt

@@ -76,3 +76,18 @@ INSERT INTO nivel (numero, titulo, tema, comandos, puntos_max) VALUES
     (4, 'La otra identidad',     'Usuarios y grupos',     'su, groups',      170),
     (5, 'El rastro en los logs', 'Registros del sistema', 'grep, /var/log',  200),
     (6, 'La fuga final',         'Tareas programadas',    'cron',            260);
+
+-- Dos pistas por nivel. Cada pista resta 10 puntos del nivel.
+INSERT INTO pista (nivel_id, orden, texto) VALUES
+    (1, 1, 'Los archivos que empiezan con punto no aparecen con ls. Prueba ls -a dentro de cada sala.'),
+    (1, 2, 'find ~/nivel1 -type f -name ".*" lista todos los archivos ocultos. Luego usa cat.'),
+    (2, 1, 'Mira el dueño y los permisos con ls -l /srv/scapelinux/nivel2.'),
+    (2, 2, 'Primero: sudo chown jugador /srv/scapelinux/nivel2/puerta.txt. Después: chmod u+r y cat.'),
+    (3, 1, 'ps aux muestra todos los procesos. Filtra con grep puerta.'),
+    (3, 2, 'kill seguido del PID detiene el proceso. Luego revisa ~/nivel3/llave.txt.'),
+    (4, 1, 'Lee la nota de ~/nivel4. Con su guardia cambias de usuario.'),
+    (4, 2, 'Como guardia, groups muestra el grupo boveda. La llave está en /srv/scapelinux/boveda.'),
+    (5, 1, 'El log solo lo lee el grupo boveda: vuelve a entrar como guardia.'),
+    (5, 2, 'Hay muchas llaves revocadas. grep ACTIVA /var/log/scapelinux/accesos.log muestra la buena.'),
+    (6, 1, 'crontab -e abre tus tareas programadas. La línea "* * * * * comando" se ejecuta cada minuto.'),
+    (6, 2, 'Agrega: * * * * * /opt/scapelinux/bin/fuga. Espera un minuto y ejecuta verificar --final.');

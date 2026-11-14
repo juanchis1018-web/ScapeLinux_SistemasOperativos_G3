@@ -1,0 +1,10 @@
+[Unit]
+Description=ScapeLinux - proceso que bloquea la puerta del nivel 3
+
+[Service]
+Type=simple
+User=jugador
+ExecStart=/opt/scapelinux/bin/puerta_bloqueada
+# El signo + ejecuta abrir_puerta como root, aunque el servicio corra como jugador.
+ExecStopPost=+/opt/scapelinux/bin/abrir_puerta
+Restart=no

@@ -1,0 +1,3 @@
+#!/bin/sh
+# Comando del jugador. Ejecuta el verificador con sudo.
+exec sudo /opt/scapelinux/verificador/scapelinux.py "$@"

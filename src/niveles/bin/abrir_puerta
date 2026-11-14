@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+# ScapeLinux, nivel 3: entrega la llave cuando termina puerta_bloqueada.
+# systemd lo ejecuta como root (ExecStopPost=+). Escribe en el home del jugador como jugador.
+set -euo pipefail
+LLAVE_GUARDADA="/var/lib/scapelinux/nivel3.llave"
+DIR="/home/jugador/nivel3"
+[[ -f "$LLAVE_GUARDADA" ]] || exit 0
+llave="$(cat "$LLAVE_GUARDADA")"
+rm -f "$LLAVE_GUARDADA"
+printf 'La puerta se abrió.\nLLAVE: %s\n' "$llave" | runuser -u jugador -- sh -c '[ -d "$1" ] && cat > "$1/llave.txt"' _ "$DIR"
