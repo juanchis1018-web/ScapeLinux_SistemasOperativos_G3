@@ -9,7 +9,7 @@ Juego de simulación en máquinas virtuales para aprender Linux resolviendo reto
 | **Grupo** | G3 |
 | **Repositorio** | [ScapeLinux_SistemasOperativos_G3](https://github.com/juanchis1018-web/ScapeLinux_SistemasOperativos_G3) |
 | **Integrantes** | Juan Sebastian Muñoz Melo · Maria Luisa Silva Santiago |
-| **Estado** | Fase II: los seis niveles, el verificador, el instalador y las pruebas están implementados. Las pruebas automáticas pasan en un entorno Linux de pruebas; la prueba en las VMs de VirtualBox está en curso. |
+| **Estado** | Versión final: el juego está implementado, instalado y probado en VirtualBox con Ubuntu Server 26.04.1 LTS. La prueba integral pasó 21 de 21 controles. |
 
 ## Contenido
 
@@ -27,6 +27,7 @@ Juego de simulación en máquinas virtuales para aprender Linux resolviendo reto
 12. [Fase II: implementación y pruebas](#12-fase-ii-implementación-y-pruebas)
 13. [Documentación](#13-documentación)
 14. [Ajustes por la revisión del docente](#14-ajustes-por-la-revisión-del-docente)
+15. [Versión final: resultados y conclusiones](#15-versión-final-resultados-y-conclusiones)
 
 ---
 
@@ -432,7 +433,7 @@ Los retos se ejecutan solo en Ubuntu Server. Debian o Lubuntu únicamente necesi
 | Saltos de línea | `.gitattributes` conserva el formato de Linux aunque se suba desde Windows |
 | Cron y systemd | Se prueban los niveles 3 y 6 en la versión elegida de Ubuntu Server |
 
-**Estado de las pruebas.** El juego pasó todas las pruebas en un entorno Linux Ubuntu 24.04. La prueba en Ubuntu Server 26.04 con `sudo-rs` se registrará en [`pruebas/README.md`](pruebas/README.md).
+**Estado de las pruebas.** El juego pasó todas las pruebas en Ubuntu Server 26.04.1 LTS, con `sudo-rs` y kernel 7.0, dentro de VirtualBox. Antes también había pasado en un entorno Linux Ubuntu 24.04. El detalle está en [`pruebas/README.md`](pruebas/README.md).
 
 ## 8. Recuperación
 
@@ -577,12 +578,9 @@ Estas pruebas se ejecutaron en un entorno Linux Ubuntu 24.04. En ese entorno no 
 
 ![Resultado de la prueba integral](recursos/imagenes/evidencias/prueba_integral.png)
 
-### Próximos avances
+### Siguiente paso
 
-- Ejecutar el instalador y la prueba integral en las VMs de VirtualBox y agregar sus capturas.
-- Confirmar las reglas de `sudo` con `sudo-rs` en Ubuntu Server 26.04.
-- Crear el snapshot `estado-limpio`, medir el tiempo de restauración y exportar las VMs en `.ova`.
-- Escribir el manual de usuario con la solución de cada nivel.
+La prueba en VirtualBox se completó en la versión final. Ver la [sección 15](#15-versión-final-resultados-y-conclusiones).
 
 ## 13. Documentación
 
@@ -607,3 +605,73 @@ Estas pruebas se ejecutaron en un entorno Linux Ubuntu 24.04. En ese entorno no 
 | Ejecutar solo en las VMs, con permisos controlados y sin afectar el anfitrión | [Sección 6](#6-seguridad-y-aislamiento) |
 | Verificar la compatibilidad entre distribuciones | [Sección 7](#7-compatibilidad-entre-distribuciones) |
 | Documentar la recuperación ante un estado inesperado | [Sección 8](#8-recuperación) |
+
+## 15. Versión final: resultados y conclusiones
+
+### Solución final
+
+ScapeLinux funciona en una VM de VirtualBox con Ubuntu Server 26.04.1 LTS. El instalador configura el sistema y el jugador resuelve los seis niveles con comandos reales: `find`, `chown`, `chmod`, `ps`, `kill`, `su`, `groups`, `grep` y `crontab`. El verificador valida cada llave, comprueba el estado del sistema y lleva el puntaje.
+
+### Entorno utilizado
+
+| Elemento | Configuración real |
+|---|---|
+| Anfitrión | Windows con Oracle VirtualBox 7.2.22 |
+| VM | `ScapeLinux-Servidor`: 2048 MB de RAM, disco de 25 GB |
+| Red | Adaptador 1 en NAT, para instalar paquetes; adaptador 2 en red interna `scapelinux` |
+| Sistema operativo | Ubuntu Server 26.04.1 LTS, kernel 7.0.0-43-generic, `sudo-rs` |
+| Administrador | Usuario `operador`. Ubuntu 26.04 reserva el nombre `admin` |
+| Paquetes | `git`, `openssh-server`, `cron` y `sqlite3` |
+
+![Configuración de la VM en VirtualBox](recursos/imagenes/evidencias/vm_virtualbox_configuracion.png)
+
+### Evidencias en VirtualBox
+
+**Instalación y prueba integral.** El instalador confirmó que el equipo es una VM de VirtualBox, validó las reglas de `sudo` y terminó sin errores. La prueba integral resolvió los seis niveles como `jugador` y pasó 21 de 21 controles.
+
+![Instalación y prueba integral en la VM](recursos/imagenes/evidencias/vm_instalacion_y_prueba_integral.png)
+
+**Partida jugada a mano.** Al entrar como `jugador` aparece el menú. El nivel 1 se resolvió buscando los archivos ocultos con `find`, leyendo la llave con `cat` y validándola con `verificar`, y así se desbloqueó el nivel 2.
+
+![Partida jugada a mano en la VM](recursos/imagenes/evidencias/vm_partida_jugador.png)
+
+### Resultados
+
+| Prueba | Entorno Linux de pruebas | VirtualBox con Ubuntu 26.04.1 |
+|---|---|---|
+| Pruebas unitarias del verificador | 11 de 11 | No aplica: no requieren VM |
+| Prueba integral | 21 de 21 | 21 de 21 |
+| Instalador | Bloqueado fuera de VirtualBox | Instalado sin errores |
+| Reglas de `sudo` del nivel 2 | Correctas con sudo | Correctas con `sudo-rs` |
+| Nivel 1 jugado a mano | Superado | Superado (100 pts) |
+
+### Cumplimiento de los objetivos
+
+| Objetivo específico | Resultado |
+|---|---|
+| 1. Configurar un entorno de VMs Linux aislado del anfitrión | VM Servidor en VirtualBox con red interna y bloqueo del instalador fuera de una VM |
+| 2. Diseñar seis niveles progresivos | Seis niveles implementados y superados en la VM |
+| 3. Implementar un verificador con pistas, puntaje y tiempo | Verificador en Python con SQLite, 11 pruebas unitarias correctas |
+| 4. Definir seguridad y recuperación | Permisos mínimos, `sudo` limitado y probado, reinicio por nivel y guía de snapshot |
+| 5. Documentar instalación, reglas y pruebas | README, guía de instalación de VMs, documentación técnica y plan de pruebas |
+
+### Evolución del proyecto
+
+| Fecha | Entrega | Avance |
+|---|---|---|
+| 21 de octubre | Ficha técnica | Idea, necesidad, requerimientos y arquitectura (Linux Escape Room) |
+| 4 de noviembre | Entrega 1 | Repositorio, documentación técnica, diagramas, modelo de datos y ajustes por la revisión del docente |
+| 13 de noviembre | Fase II | Niveles, verificador, instalador y pruebas |
+| 17 de noviembre | Versión final | Instalación y pruebas en VirtualBox con Ubuntu Server 26.04.1 |
+
+### Pendiente
+
+- Probar la conexión SSH desde una VM Jugador con Debian 13. El juego ya se probó dentro del servidor como `jugador`.
+- Crear el snapshot `estado-limpio`, medir el tiempo de restauración y exportar las VMs en `.ova`.
+
+### Conclusiones
+
+- ScapeLinux convierte los temas de la asignatura en retos que se resuelven sobre un Linux real: archivos, permisos, procesos, señales, usuarios, grupos, registros y tareas programadas.
+- La virtualización permite equivocarse sin riesgo: el juego corre en una VM aislada y el instalador se niega a ejecutarse en un equipo real.
+- Validar el estado del sistema, además de la llave, obliga a hacer el procedimiento. En el nivel 6, ejecutar la fuga a mano no basta: debe hacerlo cron.
+- Probar en la versión real del sistema fue necesario. Ubuntu 26.04 cambia detalles como el usuario `admin` reservado y el uso de `sudo-rs`, y el juego funcionó con ambos.
